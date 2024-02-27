@@ -7,7 +7,7 @@ from datetime import datetime
 import pytz
 from urllib.parse import quote_plus
 db_username="saignanadeep11"
-db_pass="Project@123"
+db_pass=""
 escaped_username = quote_plus(db_username)
 escaped_password = quote_plus(db_pass)
 db_name = "Attendance"
