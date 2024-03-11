@@ -6,13 +6,7 @@ import numpy as np
 from datetime import datetime
 import pytz
 from urllib.parse import quote_plus
-db_username="saignanadeep11"
-db_pass=""
-escaped_username = quote_plus(db_username)
-escaped_password = quote_plus(db_pass)
-db_name = "Attendance"
-CONNECTION_URL = f"mongodb+srv://{escaped_username}:{escaped_password}@cluster0.bbju1nm.mongodb.net/{db_name}?retryWrites=true&w=majority"
-client = MongoClient(CONNECTION_URL)
+
 
 # print(client.list_database_names())
 def get_database():
@@ -20,21 +14,46 @@ def get_database():
     # client = MongoClient(CONNECTION_URL)
     # client = MongoClient('localhost',27017)
     # print(client.list_database_names())
+    db_username="saignanadeep11"
+    db_pass=""
+    escaped_username = quote_plus(db_username)
+    escaped_password = quote_plus(db_pass)
+    db_name = "Attendance"
+    CONNECTION_URL = f"mongodb+srv://{escaped_username}:{escaped_password}@cluster0.bbju1nm.mongodb.net/{db_name}?retryWrites=true&w=majority"
+    client = MongoClient(CONNECTION_URL)
     return client['Attendance']
+# def getEncodings():
+#     dbname=get_database()
+#     print(dbname)
+#     collection_name = dbname["encodings"]
+#     print(collection_name)
+#     items=collection_name.find({})
+#     for i in items:
+#         i.pop("_id")
+#         known_images=list(i.keys())
+#         values=list(i.values())
+#         encodings=[]
+#         for v in values:
+#             encodings.append(np.array(v))
+#         return known_images,encodings
+
 def getEncodings():
-    dbname=get_database()
-    print(dbname)
+    dbname = get_database()
+    # print(dbname)
     collection_name = dbname["encodings"]
-    print(collection_name)
-    items=collection_name.find({})
+    # print(collection_name)
+    
+    known_images = []
+    encodings = []
+    
+    items = collection_name.find({})
     for i in items:
         i.pop("_id")
-        known_images=list(i.keys())
-        values=list(i.values())
-        encodings=[]
-        for v in values:
-            encodings.append(np.array(v))
-        return known_images,encodings
+        known_images.append(list(i.keys())[0])
+        values = list(i.values())[0]
+        encodings.append(np.array(values))
+        
+    return known_images, encodings
 
 def update_face(imgName,addImg):
     addImage=fr.load_image_file(addImg)
@@ -52,18 +71,35 @@ def update_face(imgName,addImg):
     except:
         return False
 
+# def compare_faces(baseImg):
+#     known_images,encodings=getEncodings()
+#     test = fr.load_image_file(baseImg)
+#     try:
+#         test_encoding = fr.face_encodings(test)[0]
+#     except IndexError as e:
+#         return False
+#     results = fr.compare_faces(encodings, test_encoding)    
+#     print(results)
+#     if(True in results):
+#         i=results.index(True)
+#         return known_images[i].split(".")[0]
+#     return False
 def compare_faces(baseImg):
-    known_images,encodings=getEncodings()
+    known_images, encodings = getEncodings()
     test = fr.load_image_file(baseImg)
     try:
         test_encoding = fr.face_encodings(test)[0]
     except IndexError as e:
         return False
-    results = fr.compare_faces(encodings, test_encoding)    
-    print(results)
-    if(True in results):
-        i=results.index(True)
-        return known_images[i].split(".")[0]
+    # print()
+    # print(encodings)
+    # print()
+    for i, encoding in enumerate(encodings):
+        # print(encoding)
+        result = fr.compare_faces([encoding], test_encoding)
+        if True in result:
+            return known_images[i].split(".")[0]
+    
     return False
 
 def update_attendance(id,status):
